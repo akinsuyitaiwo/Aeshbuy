@@ -8,7 +8,7 @@ Last updated: 2026-10-08
 |---|---|---|
 | 0 — Discovery and decisions | TESTED | Requirements, architecture, database/API/security/test designs, ADRs and traceability created |
 | 1 — Foundation | TESTED | Quality gate, migration, tests, images and runtime smoke checks passed |
-| 2 — Identity and customers | NOT_STARTED | — |
+| 2 — Identity and customers | TESTED | Identity migration; Argon2/JWT/session/RBAC/customer APIs; unit and E2E gate passed |
 | 3 — Merchant onboarding | NOT_STARTED | — |
 | 4 — Catalogue and inventory | NOT_STARTED | — |
 | 5 — Cart, checkout, orders | NOT_STARTED | — |
@@ -157,4 +157,41 @@ Status: TESTED
 
 #### Next safe task
 
-- Sprint 2: identity schema, Argon2 credentials, rotating sessions, RBAC/permissions, customer profiles/addresses, auth endpoints and authorization tests.
+- Sprint 3: merchant onboarding, staff membership, KYC documents, agreements, commercial terms and audited administration.
+
+### 2026-10-08 — Sprint 2 identity and customers
+
+Status: TESTED
+
+#### Delivered
+
+- User, roles, permissions, sessions, refresh/verification/reset tokens, customer profiles and addresses.
+- Argon2id credentials, access JWTs and opaque hashed refresh tokens with atomic rotation and reuse-driven session revocation.
+- Registration, login, refresh, logout, one-time email verification, enumeration-resistant password reset, current user, session listing/revocation and account deactivation.
+- Persisted-session/account-status authorization, permission guard/decorator, transactional outbox events and ownership-scoped customer profile/address APIs.
+- CORS allow-list correction and regression test.
+
+#### Evidence
+
+- Source: `src/modules/auth`, `src/modules/customers`, `src/common/guards` and `src/common/decorators`.
+- Migration: `prisma/migrations/20261008062442_identity_customers/migration.sql`.
+- Tests: `test/permissions.spec.ts`, `test/auth.e2e-spec.ts`, `test/health.e2e-spec.ts`.
+- API: required `/api/v1/auth/*` routes plus `/api/v1/customers/me/*` and account deactivation.
+
+#### Validation
+
+| Command | Result | Notes |
+|---|---|---|
+| `npm run validate` | PASS | Format, lint, typecheck, schema, build and 3 unit tests |
+| `npm run test:integration` | PASS | 2 PostgreSQL foundation tests |
+| `npm run test:e2e` | PASS | 9 health/security/identity/customer tests |
+| `npm audit --omit=dev` | PASS | 0 production vulnerabilities |
+
+#### Decisions and blockers
+
+- Email delivery remains outbox-backed until the notification provider sprint; no fake provider success is claimed.
+- No blocker for Sprint 3. KYC and bank verification will use provider abstractions until provider credentials are supplied under DEC-007.
+
+#### Next safe task
+
+- Sprint 3 merchant lifecycle, staff membership authorization, KYC/document metadata, agreements, commercial configuration and admin approval audit.

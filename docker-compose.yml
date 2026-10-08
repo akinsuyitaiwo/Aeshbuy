@@ -35,8 +35,8 @@ services:
         required: false
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://aeshbuy:aeshbuy@postgres:5432/aeshbuy?schema=public}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      DATABASE_URL: postgresql://aeshbuy:aeshbuy@postgres:5432/aeshbuy?schema=public
+      REDIS_URL: redis://redis:6379
       SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
     command: ["node", "dist/main.js"]
     ports:
@@ -54,8 +54,8 @@ services:
         required: false
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://aeshbuy:aeshbuy@postgres:5432/aeshbuy?schema=public}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      DATABASE_URL: postgresql://aeshbuy:aeshbuy@postgres:5432/aeshbuy?schema=public
+      REDIS_URL: redis://redis:6379
     command: ["node", "dist/worker.js"]
     depends_on:
       postgres:

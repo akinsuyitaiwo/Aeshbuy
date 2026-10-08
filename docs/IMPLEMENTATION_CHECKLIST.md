@@ -11,7 +11,7 @@ The detailed ordering and gates are in [SPRINT_PLAN.md](SPRINT_PLAN.md); verifie
 - [x] Structured logging/redaction, correlation IDs, global validation/errors, Helmet, CORS and throttling.
 - [x] Swagger, health checks, Docker/Compose and CI foundation.
 - [x] Sprint 1 full validation gate passes.
-- [ ] Identity, sessions, RBAC and customers.
+- [x] Identity, sessions, RBAC and customers.
 - [ ] Merchant onboarding and administration.
 - [ ] Catalogue and inventory.
 - [ ] Cart, checkout and orders.

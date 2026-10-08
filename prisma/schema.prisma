@@ -14,6 +14,167 @@ enum OutboxStatus {
   FAILED
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum RoleCode {
+  CUSTOMER
+  MERCHANT
+  PARTNER
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id                String                   @id @default(uuid()) @db.Uuid
+  email             String                   @unique
+  passwordHash      String
+  status            UserStatus               @default(ACTIVE)
+  emailVerifiedAt   DateTime?                @db.Timestamptz(6)
+  lastLoginAt       DateTime?                @db.Timestamptz(6)
+  createdAt         DateTime                 @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime                 @updatedAt @db.Timestamptz(6)
+  roles             UserRole[]
+  sessions          UserSession[]
+  emailVerification EmailVerificationToken[]
+  passwordReset     PasswordResetToken[]
+  customerProfile   CustomerProfile?
+
+  @@index([status])
+  @@index([createdAt, id])
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        RoleCode         @unique
+  description String?
+  createdAt   DateTime         @default(now()) @db.Timestamptz(6)
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        String           @unique
+  description String?
+  createdAt   DateTime         @default(now()) @db.Timestamptz(6)
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId     String   @db.Uuid
+  roleId     String   @db.Uuid
+  assignedAt DateTime @default(now()) @db.Timestamptz(6)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model UserSession {
+  id            String         @id @default(uuid()) @db.Uuid
+  userId        String         @db.Uuid
+  userAgent     String?
+  ipAddress     String?
+  lastUsedAt    DateTime       @default(now()) @db.Timestamptz(6)
+  expiresAt     DateTime       @db.Timestamptz(6)
+  revokedAt     DateTime?      @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @db.Timestamptz(6)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens RefreshToken[]
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+}
+
+model RefreshToken {
+  id           String        @id @default(uuid()) @db.Uuid
+  sessionId    String        @db.Uuid
+  tokenHash    String        @unique
+  expiresAt    DateTime      @db.Timestamptz(6)
+  revokedAt    DateTime?     @db.Timestamptz(6)
+  replacedById String?       @unique @db.Uuid
+  createdAt    DateTime      @default(now()) @db.Timestamptz(6)
+  session      UserSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  replacedBy   RefreshToken? @relation("TokenRotation", fields: [replacedById], references: [id])
+  replaces     RefreshToken? @relation("TokenRotation")
+
+  @@index([sessionId, revokedAt])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(6)
+  usedAt    DateTime? @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(6)
+  usedAt    DateTime? @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, usedAt])
+  @@index([expiresAt])
+}
+
+model CustomerProfile {
+  id        String            @id @default(uuid()) @db.Uuid
+  userId    String            @unique @db.Uuid
+  firstName String
+  lastName  String
+  phone     String?
+  createdAt DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime          @updatedAt @db.Timestamptz(6)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses CustomerAddress[]
+}
+
+model CustomerAddress {
+  id         String          @id @default(uuid()) @db.Uuid
+  customerId String          @db.Uuid
+  label      String
+  recipient  String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  country    String          @default("NG")
+  postalCode String?
+  isDefault  Boolean         @default(false)
+  createdAt  DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime        @updatedAt @db.Timestamptz(6)
+  customer   CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, isDefault])
+}
+
 model OutboxEvent {
   id            String       @id @default(uuid()) @db.Uuid
   aggregateType String

@@ -19,4 +19,18 @@ describe('Health (e2e)', () => {
       .expect(200)
       .expect({ status: 'ok' });
   });
+
+  it('allows only configured browser origins', async () => {
+    await request(app.getHttpServer() as Server)
+      .get('/api/v1/health/live')
+      .set('Origin', 'http://localhost:3001')
+      .expect('access-control-allow-origin', 'http://localhost:3001')
+      .expect(200);
+
+    const blocked = await request(app.getHttpServer() as Server)
+      .get('/api/v1/health/live')
+      .set('Origin', 'https://evil.example')
+      .expect(200);
+    expect(blocked.headers['access-control-allow-origin']).toBeUndefined();
+  });
 });

@@ -9,6 +9,8 @@ import { environmentSchema } from './config/environment';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { RedisModule } from './infrastructure/redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { CustomersModule } from './modules/customers/customers.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { HealthModule } from './modules/health/health.module';
     PrismaModule,
     RedisModule,
     HealthModule,
+    AuthModule,
+    CustomersModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -16,7 +16,7 @@ export async function createApplication(): Promise<INestApplication> {
   app.useLogger(app.get(Logger));
   app.use(helmet());
   app.enableCors({
-    origins: getCorsOrigins(config.get<string>('CORS_ORIGINS')),
+    origin: getCorsOrigins(config.get<string>('CORS_ORIGINS')),
     credentials: true,
   });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1', prefix: 'api/v' });
