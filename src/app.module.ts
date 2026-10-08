@@ -11,6 +11,7 @@ import { RedisModule } from './infrastructure/redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { MerchantsModule } from './modules/merchants/merchants.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { CustomersModule } from './modules/customers/customers.module';
     HealthModule,
     AuthModule,
     CustomersModule,
+    MerchantsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

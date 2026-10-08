@@ -12,6 +12,16 @@ async function main(): Promise<void> {
       }),
     ),
   );
+  const permission = await prisma.permission.upsert({
+    where: { code: 'merchants.review' },
+    create: { code: 'merchants.review', description: 'Review merchant applications' },
+    update: {},
+  });
+  const adminRoles = await prisma.role.findMany({ where: { code: { in: [RoleCode.ADMIN, RoleCode.SUPER_ADMIN] } } });
+  await Promise.all(adminRoles.map((role) => prisma.rolePermission.upsert({
+    where: { roleId_permissionId: { roleId: role.id, permissionId: permission.id } },
+    create: { roleId: role.id, permissionId: permission.id }, update: {},
+  })));
 }
 
 main()

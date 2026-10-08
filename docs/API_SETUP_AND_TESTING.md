@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- A currently supported Node.js LTS version (pin it in `.nvmrc` during Sprint 1).
+- Node.js 22.14.0, pinned in `.nvmrc` (run `nvm install && nvm use`).
 - npm.
 - Docker Engine with Docker Compose v2.
 - Git and an API client such as curl, Postman, or Bruno.
@@ -17,6 +17,8 @@ PostgreSQL and Redis should run through Compose for local development. Transacti
 ```bash
 git clone <repository-url>
 cd Aeshbuy
+nvm install
+nvm use
 npm ci
 cp .env.example .env
 docker compose up -d postgres redis

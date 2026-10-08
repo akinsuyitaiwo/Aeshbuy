@@ -12,7 +12,7 @@ The detailed ordering and gates are in [SPRINT_PLAN.md](SPRINT_PLAN.md); verifie
 - [x] Swagger, health checks, Docker/Compose and CI foundation.
 - [x] Sprint 1 full validation gate passes.
 - [x] Identity, sessions, RBAC and customers.
-- [ ] Merchant onboarding and administration.
+- [x] Merchant onboarding and administration: lifecycle, scoped staff access, KYC/bank provider abstractions, agreements, commercial terms, review audit and E2E coverage.
 - [ ] Catalogue and inventory.
 - [ ] Cart, checkout and orders.
 - [ ] Payments and reconciliation.

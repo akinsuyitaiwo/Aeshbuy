@@ -28,23 +28,175 @@ enum RoleCode {
   SUPER_ADMIN
 }
 
+enum MerchantStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum MerchantMemberRole {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+enum MerchantMemberStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
 model User {
-  id                String                   @id @default(uuid()) @db.Uuid
-  email             String                   @unique
-  passwordHash      String
-  status            UserStatus               @default(ACTIVE)
-  emailVerifiedAt   DateTime?                @db.Timestamptz(6)
-  lastLoginAt       DateTime?                @db.Timestamptz(6)
-  createdAt         DateTime                 @default(now()) @db.Timestamptz(6)
-  updatedAt         DateTime                 @updatedAt @db.Timestamptz(6)
-  roles             UserRole[]
-  sessions          UserSession[]
-  emailVerification EmailVerificationToken[]
-  passwordReset     PasswordResetToken[]
-  customerProfile   CustomerProfile?
+  id                  String                   @id @default(uuid()) @db.Uuid
+  email               String                   @unique
+  passwordHash        String
+  status              UserStatus               @default(ACTIVE)
+  emailVerifiedAt     DateTime?                @db.Timestamptz(6)
+  lastLoginAt         DateTime?                @db.Timestamptz(6)
+  createdAt           DateTime                 @default(now()) @db.Timestamptz(6)
+  updatedAt           DateTime                 @updatedAt @db.Timestamptz(6)
+  roles               UserRole[]
+  sessions            UserSession[]
+  emailVerification   EmailVerificationToken[]
+  passwordReset       PasswordResetToken[]
+  customerProfile     CustomerProfile?
+  merchantMemberships MerchantMember[]
+  merchantReviews     MerchantReview[]         @relation("MerchantReviewer")
+  auditLogs           AuditLog[]               @relation("AuditActor")
 
   @@index([status])
   @@index([createdAt, id])
+}
+
+model Merchant {
+  id                 String                   @id @default(uuid()) @db.Uuid
+  legalName          String
+  tradingName        String
+  registrationNumber String?
+  taxId              String?
+  email              String
+  phone              String
+  status             MerchantStatus           @default(DRAFT)
+  rejectionReason    String?
+  submittedAt        DateTime?                @db.Timestamptz(6)
+  approvedAt         DateTime?                @db.Timestamptz(6)
+  suspendedAt        DateTime?                @db.Timestamptz(6)
+  createdAt          DateTime                 @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime                 @updatedAt @db.Timestamptz(6)
+  members            MerchantMember[]
+  documents          MerchantDocument[]
+  bankAccounts       MerchantBankAccount[]
+  agreements         MerchantAgreement[]
+  commercialRules    MerchantCommercialRule[]
+  reviews            MerchantReview[]
+
+  @@index([status, createdAt])
+}
+
+model MerchantMember {
+  merchantId String               @db.Uuid
+  userId     String               @db.Uuid
+  role       MerchantMemberRole
+  status     MerchantMemberStatus @default(ACTIVE)
+  createdAt  DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime             @updatedAt @db.Timestamptz(6)
+  merchant   Merchant             @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([merchantId, userId])
+  @@index([userId, status])
+}
+
+model MerchantDocument {
+  id          String             @id @default(uuid()) @db.Uuid
+  merchantId  String             @db.Uuid
+  type        String
+  objectKey   String
+  fileName    String
+  contentType String
+  status      VerificationStatus @default(PENDING)
+  createdAt   DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @db.Timestamptz(6)
+  merchant    Merchant           @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, type])
+  @@index([merchantId, status])
+}
+
+model MerchantBankAccount {
+  id            String             @id @default(uuid()) @db.Uuid
+  merchantId    String             @db.Uuid
+  bankCode      String
+  accountNumber String
+  accountName   String
+  status        VerificationStatus @default(PENDING)
+  providerRef   String?
+  createdAt     DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime           @updatedAt @db.Timestamptz(6)
+  merchant      Merchant           @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, accountNumber])
+  @@index([merchantId, status])
+}
+
+model MerchantAgreement {
+  id         String   @id @default(uuid()) @db.Uuid
+  merchantId String   @db.Uuid
+  version    String
+  acceptedBy String   @db.Uuid
+  acceptedAt DateTime @default(now()) @db.Timestamptz(6)
+  ipAddress  String?
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, version])
+}
+
+model MerchantCommercialRule {
+  id                  String    @id @default(uuid()) @db.Uuid
+  merchantId          String    @db.Uuid
+  commissionRate      Decimal   @db.Decimal(7, 4)
+  settlementDelayDays Int
+  effectiveFrom       DateTime  @db.Timestamptz(6)
+  effectiveTo         DateTime? @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @db.Timestamptz(6)
+  merchant            Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, effectiveFrom])
+}
+
+model MerchantReview {
+  id         String         @id @default(uuid()) @db.Uuid
+  merchantId String         @db.Uuid
+  reviewerId String         @db.Uuid
+  fromStatus MerchantStatus
+  toStatus   MerchantStatus
+  reason     String?
+  createdAt  DateTime       @default(now()) @db.Timestamptz(6)
+  merchant   Merchant       @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  reviewer   User           @relation("MerchantReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([merchantId, createdAt])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @db.Uuid
+  action       String
+  resourceType String
+  resourceId   String
+  metadata     Json?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  actor        User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([resourceType, resourceId, createdAt])
+  @@index([actorId, createdAt])
 }
 
 model Role {

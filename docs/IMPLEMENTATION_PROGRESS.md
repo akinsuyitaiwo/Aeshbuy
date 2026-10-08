@@ -9,7 +9,7 @@ Last updated: 2026-10-08
 | 0 — Discovery and decisions | TESTED | Requirements, architecture, database/API/security/test designs, ADRs and traceability created |
 | 1 — Foundation | TESTED | Quality gate, migration, tests, images and runtime smoke checks passed |
 | 2 — Identity and customers | TESTED | Identity migration; Argon2/JWT/session/RBAC/customer APIs; unit and E2E gate passed |
-| 3 — Merchant onboarding | NOT_STARTED | — |
+| 3 — Merchant onboarding | TESTED | Merchant lifecycle, scoped membership, provider abstractions, agreements, review/economics and audit E2E |
 | 4 — Catalogue and inventory | NOT_STARTED | — |
 | 5 — Cart, checkout, orders | NOT_STARTED | — |
 | 6 — Payments | NOT_STARTED | — |
@@ -195,3 +195,37 @@ Status: TESTED
 #### Next safe task
 
 - Sprint 3 merchant lifecycle, staff membership authorization, KYC/document metadata, agreements, commercial configuration and admin approval audit.
+
+### 2026-10-08 — Sprint 3 merchant onboarding
+
+Status: TESTED
+
+#### Delivered
+
+- Merchant draft, profile, membership, submission, approval, rejection and suspension lifecycle with state validation.
+- Ownership-scoped access that conceals merchant resources from non-members, manager-only mutations, and fine-grained `merchants.review` administration.
+- KYC document upload-grant and bank-verification provider abstractions, agreement acceptance, effective-dated commission/settlement rules, review history, audit logs and outbox events.
+
+#### Evidence
+
+- Source: `src/modules/merchants` and `prisma/seed.ts`.
+- Migration: `prisma/migrations/20261008065350_merchant_onboarding/migration.sql`.
+- Tests: `test/merchants.e2e-spec.ts`.
+- API: `/api/v1/merchants/*` and `/api/v1/admin/merchants/*`.
+
+#### Validation
+
+| Command | Result | Notes |
+|---|---|---|
+| `npm run validate` | PASS | Format, lint, typecheck, schema, build and unit tests |
+| `npm run test:integration` | PASS | 2 PostgreSQL persistence/constraint tests |
+| `npm run test:e2e` | PASS | 13 health, identity, customer and merchant lifecycle/security tests |
+
+#### Decisions and blockers
+
+- Document storage and bank verification remain replaceable local/deferred adapters until provider credentials are supplied under DEC-007; no external verification success is claimed.
+- Commercial values are captured as effective-dated merchant approval inputs; platform-wide precedence remains blocked by DEC-001.
+
+#### Next safe task
+
+- Sprint 4 catalogue, product moderation, variants and concurrency-safe inventory reservations.
